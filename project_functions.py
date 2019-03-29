@@ -7,6 +7,8 @@ from sklearn.decomposition import NMF as NMF_sklearn
 import warnings; warnings.simplefilter('ignore')
 import rfpimp
 from sklearn.metrics import confusion_matrix, precision_score, recall_score
+from collections import Counter
+from sklearn.linear_model import LogisticRegression
 
 custy_df = pd.read_csv('custy_data.csv', skiprows=None, index_col='Customer ID', parse_dates=["Date Joined"])
 custy_df = custy_df.dropna(axis=0, how='all')
@@ -80,11 +82,11 @@ def assemble_feature_df():
     return feature_extraction_df.dropna(thresh=3)
 
 
-def make_historical_purchase_matrix():
+def make_historical_purchase_matrix(trimmed_df):
     
-    historical_purchase_df = pd.DataFrame(0, index=custy_df.index, columns=product_df['Product ID'])
+    historical_purchase_df = pd.DataFrame(0, index=trimmed_df.index, columns=product_df['Product ID'])
 
-    for customer in custy_df.index.values:
+    for customer in trimmed_df.index.values:
 
         mask = order_df[order_df['Customer ID'] == customer] # mask for all orders under a customer
 
@@ -107,8 +109,7 @@ def make_historical_purchase_matrix():
                 
                 else: historical_purchase_df[prod_id][customer] += prod_qty
             
-    historical_purchase_matrix = historical_purchase_df.as_matrix()
-    return historical_purchase_matrix
+    return historical_purchase_df, historical_purchase_df.as_matrix()
 
 def do_NMF(X, n_topics, max_iters, n_items):
     
@@ -178,3 +179,46 @@ def score_rf(df, n_feature_importances):
     print("recall:", recall_score(y_test, y_pred))
     print('\n')
     print(imp[0:n_feature_importances])
+
+def get_churniest_items(hist_purch_mat, trimmed_df, n_topics=5, max_iters=150, n_churniest_topics=3):
+    
+    # here i define churn as having been a customer for at least 365 days, 
+    #and not having made a purchase in 365 days
+    
+    churning_man = (trimmed_df[(trimmed_df['churn_bool'] == 1) & (trimmed_df['time_as_customer'] > 365)].index).astype(int)
+    
+    nmf = NMF_sklearn(n_components=n_topics, max_iter=max_iters, alpha=0.0)
+    W = nmf.fit_transform(hist_purch_mat) # how much each customer belongs to each "topic"
+    H = nmf.components_ # how much each item belongs to each "topic"
+    
+    sums = W[churning_man].sum(axis=0)
+    churniest_topics = sums.argsort()[-n_churniest_topics:] 
+    
+    c = Counter()
+    
+    for topic in churniest_topics:
+        indicies = H[topic].argsort()[-50:]
+    
+        for product in product_df['Name'][indicies]:
+            c[product] += 1
+            
+    return c.most_common(25)
+
+
+
+if __name__ == '__main__':
+    #step 1 - extract initial features
+    df = assemble_feature_df()
+
+    #step 2 - transform data (binarize cols, log cost feats, make a churn bool)
+    make_churn(df, 365)
+    binarized = binarize_cols(df)
+    final = log_cost_features(binarized)
+
+    #step 3 - score random forest, get feat importances
+    score_rf(final,15)
+
+    #step 4 - assemble historical itemized purchase matrix
+    hist_purch_mat = make_historical_purchase_matrix(final)
+
+    #step 5
