@@ -84,15 +84,6 @@ def assemble_feature_df(custy_df, order_df, subscriber_df):
     print("initial feature extraction completed.")
     return feature_extraction_df.dropna(thresh=3)
 
-def make_TT_split(df):
-
-    y = df['churn_bool']
-    X = df.drop(columns=['days_since_last_order', 'churn_bool'], axis=1)
-    
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=10)
-    
-    return X_train, X_test, y_train, y_test
-
 def make_historical_purchase_matrix(trimmed_df, order_df, product_df):
     
     historical_purchase_df = pd.DataFrame(0, index=trimmed_df.index, columns=product_df['Product ID'])
@@ -128,10 +119,13 @@ class Transform():
      
      Parameters
      ----------
-    feature_df = 
+    feature_df = the results of 'assemble_feature_matrix', should contain 1 column for 'Affiliation' and 1 column for 'Customer Group' 
+    (these two are the only string cols, the rest are numeric)
      
      Attributes
      ----------
+     this class uses one hot encoding, logs cost features, makes a churn boolean, and trims the dataframe
+     option to fit an initial random forest to these features
      '''
 
     def __init__(self, feature_df):
@@ -140,7 +134,6 @@ class Transform():
 
     def make_churn(self, days):
         self.feature_df['churn_bool'] = np.where(self.feature_df['days_since_last_order'] >= days, 1, 0)
-        #self.feature_df.drop(columns=['days_since_last_order'], axis=1)
 
     def binarize(self):
         
@@ -155,12 +148,39 @@ class Transform():
         self.feature_df['avg_order_value_logged'] = self.feature_df['avg_order_value'].apply(lambda x: np.log(x) if x > 0 else 0)
         self.feature_df['ship_total_logged'] = self.feature_df['ship_total'].apply(lambda x: np.log(x) if x > 0 else 0)
         
-    def drop_cols(self):
+    def drop_cols_and_nan_rows(self):
         
         self.feature_df = self.feature_df.drop(columns=['ship_total', 'avg_order_value', 'customer_group', 'affiliation', 'days_since_last_order'], axis=1)
+        self.feature_df.dropna(thresh=4, inplace=True)
+        self.feature_df = self.feature_df.fillna(0)
         
         return self.feature_df
+    
+    def do_initial_rf(self, n_feature_importances=15):
+    
+        X = self.feature_df.drop(columns=['churn_bool'], axis=1)
+        y = self.feature_df['churn_bool']
         
+        X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=10)
+    
+        model = RandomForestClassifier(oob_score=True)
+
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        
+        print("The following are the results of a random forest fit to the original feature extractions only:")
+        print("\naccuracy:", round(model.score(X_test, y_test),3))
+        print("precision:", round(precision_score(y_test, y_pred),3))
+        print("recall:", round(recall_score(y_test, y_pred),3))
+        
+        importances = model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+        
+        print("\nFeature ranking:")
+        for feat in range(0,15):
+            print("%d. %s (%f)" % (feat + 1, X_train.columns[indices[feat]], importances[indices[feat]]))
+            
+            
 class NMF():
     ''' Use sklearn's implementation of NMF combined with some supervised learning techniques.
      
@@ -172,28 +192,33 @@ class NMF():
      ----------
      '''
 
-    def __init__(self, historical_purchase_matrix, n_topics):
+    def __init__(self):
 
-        self.historical_purchase_matrix = historical_purchase_matrix
-        self.n_topics = n_topics
+        self.historical_purchase_matrix = None
 
         self.H = None
         self.W = None
+        
+        self.n_topics = None
 
         self.W_train = None
         self.W_test = None
         self.y_train = None
         self.y_test = None
 
-    def do_NMF(self, max_iters):
-        nmf = NMF_sklearn(n_components=self.n_topics, max_iter=max_iters, alpha=0.0)
+    def do_NMF(self, historical_purchase_matrix, n_topics, max_iters):
+        
+        self.historical_purchase_matrix = historical_purchase_matrix
+        self.n_topics = n_topics
+        
+        nmf = NMF_sklearn(n_components=n_topics, max_iter=max_iters, alpha=0.0)
         self.W = nmf.fit_transform(self.historical_purchase_matrix) # how much each customer belongs to each "topic"
         self.H = nmf.components_ # how much each item belongs to each "topic"
-
-        self.model = None
+    
+        return self.W, self.H
     
     def top_products_for_topics(self, product_df, n_items):
-        print("Here are the top products for topics")
+        print("Here are the top products for %s topics" % (self.n_topics))
         for topic in range(0, self.n_topics):
             indicies = self.H[topic].argsort()[-n_items:]
             print("\n")
@@ -219,13 +244,15 @@ class NMF():
     def do_RF(self, feature_df):
 
         W_df = pd.DataFrame(self.W)
+        churn_bool = feature_df['churn_bool']
         feature_df = feature_df.drop(columns=['churn_bool'], axis=1)
 
         merged_df = pd.concat([feature_df.reset_index(drop=True), W_df.reset_index(drop=False)], axis=1)
         new_index = feature_df.index[0:len(merged_df)]
+        merged_df = merged_df.drop(columns=['index'], axis=1)
         merged_df.reindex(new_index).dropna()
-
-        self.W_train, self.W_test, self.y_train, self.y_test = train_test_split(merged_df, feature_df['churn_bool'], random_state=10)
+        
+        self.W_train, self.W_test, self.y_train, self.y_test = train_test_split(merged_df, churn_bool, random_state=10)
 
         model = RandomForestClassifier(oob_score=True)
 
@@ -235,30 +262,38 @@ class NMF():
         y_pred = self.model.predict(self.W_test)
 
         print("The following are the results of a random forest fit to the original features appended to the Weights Matrix:")
-        print("\naccuracy:", round(self.model.score(X_test, y_test),3))
-        print("precision:", round(precision_score(y_test, y_pred),3))
-        print("recall:", round(recall_score(y_test, y_pred),3))
+        print("\naccuracy:", round(self.model.score(self.W_test, self.y_test),3))
+        print("precision:", round(precision_score(self.y_test, y_pred),3))
+        print("recall:", round(recall_score(self.y_test, y_pred),3))
+        
+        importances = self.model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+        
+        print("\nFeature ranking:")
+        for feat in range(0,15):
+            print("%d. %s (%f)" % (feat + 1, self.W_train.columns[indices[feat]], importances[indices[feat]]))
 
-    #def get_churniest_items(self, trimmed_df, product_df, n_topics=5, max_iters=150, n_churniest_topics=3, n_churniest_items=25):
+        
+    def get_churniest_items(self, feature_df, product_df, n_topics, max_iters=250, n_churniest_topics=3, n_churniest_items=25):
+        
+        self.n_topics = n_topics
 
-    #    churning_mask = (trimmed_df[(trimmed_df['churn_bool'] == 1) & (trimmed_df['time_as_customer'] > 365)].index).astype(int)
-    #    churnNMF = NMF()
+        churned_index = np.array((feature_df[(feature_df['churn_bool'] == 1) & (feature_df['time_as_customer'] > 365)].index).astype(int))
+        churning_mask_matrix = self.historical_purchase_matrix[churned_index]
+        
+        W, H = self.do_NMF(churning_mask_matrix, n_topics=self.n_topics, max_iters=max_iters)
 
+        sums = W.sum(axis=0)
+        churniest_topics = sums.argsort()[-n_churniest_topics:] 
     
-    #    sums = self.W[churning_mask].sum(axis=0)
-    #    churniest_topics = sums.argsort()[-n_churniest_topics:] 
+        c = Counter()
     
-    #    c = Counter()
-    
-    #    for topic in churniest_topics:
-    #        indicies = self.H[topic].argsort()[-50:]
-    #        for product in product_df['Name'][indicies]:
-    #            c[product] += 1
+        for topic in churniest_topics:
+            indicies = H[topic].argsort()[-50:]
+            for product in product_df['Name'][indicies]:
+                c[product] += 1
 
-    #    return c.most_common(n_churniest_items)
-
-
-
+        return c.most_common(n_churniest_items)
 
 
 if __name__ == '__main__':
@@ -268,24 +303,23 @@ if __name__ == '__main__':
     #step 2 - transform data (binarize cols, log cost feats, make a churn bool)
     churnTransformer = Transform(feature_df)
 
-    churnTransformer.make_churn(feature_df, 365)
-    churnTransformer.log_cost_features(feature_df)
-    churnTransformer.binarize(feature_df)
-
+    churnTransformer.make_churn(365)
+    churnTransformer.binarize()
+    churnTransformer.log_cost_features()
+    transformed = churnTransformer.drop_cols_and_nan_rows()
+    churnTransformer.do_initial_rf(n_feature_importances=15)
     print("Transformations completed.")
-
-    #step 2B - make TT split to be used for entirety of program
-    X_train, X_test, y_train, y_test = make_TT_split(feature_df)
 
     #step 3 - assemble itemized historical purchase matrix
     historical_purchase_df, historical_purchase_matrix = make_historical_purchase_matrix(feature_df, order_df, product_df)
 
-    #step 4 - do initial NMF and get top products for each topic
-    churnNMF = NMF(historical_purchase_matrix, n_topics=5)
+    #step 4 - do NMF and get top products for each topic
+    myNMF = NMF()
 
-    churnNMF.do_NMF(max_iters=300)
-    churnNMF.top_products_for_topics(product_df, n_items=15)
-    churnNMF.do_logreg(feature_df)
-    churnNMF.do_RF(feature_df)
+    W_0, H_0 = myNMF.do_NMF(historical_purchase_matrix, n_topics=5, max_iters=50)
+    myNMF.top_products_for_topics(product_df, n_items=25)
+    myNMF.do_logreg(transformed)
+    myNMF.do_RF(transformed)
+    myNMF.get_churniest_items(transformed, product_df, n_topics=5, n_churniest_topics=3, n_churniest_items=25)
 
 
