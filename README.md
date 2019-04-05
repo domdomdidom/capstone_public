@@ -110,9 +110,16 @@ As a reminder, we didn't do any NMF for this problem. We just have the transform
        
 Word! Ok, time to model. Just like the instructions above, we're going to fit, predict, and score our model EXCEPT FOR TWO BIG DIFFERENCES:
 
-        1. We are using a REGRESSOR instead of a CLASSIFIER. Our target, time_as_customer, is a continuous variable. It didn't seem appropriate to use historical data to model a future event ('is this customer going to churn'), so we're switching up the question to 'how long was this person a customer'. It's a variation of the same question, just framed in a way that makes a bit more sense with the data we're using. 
+        1. We are using a REGRESSOR instead of a CLASSIFIER. Our target, time_as_customer, is a continuous variable. 
+        It didn't seem appropriate to use historical data to model a future event ('is this customer going to churn'), 
+        so we're switching up the question to 'how long was this person a customer'. It's a variation of the same question,
+        just framed in a way that makes a bit more sense with the data we're using. 
         
-        2. We are using a GradientBoost instead of a RandomForest! Since we didn't do NMF, and we lost about half of our original features, a more robust model seems to perform better here. Note that both GB and RF are ensemble decision tree methods. 
+        2. We are using a GradientBoost instead of a RandomForest! Since we didn't do NMF, and we lost about half 
+        of our original features, a more robust model seems to perform better here. Note that both GB and RF are 
+        ensemble decision tree methods. 
+        
+I digress. Time to model.
         
         coldModel = Model_Cold_Start()
         
