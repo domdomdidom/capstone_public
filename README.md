@@ -6,9 +6,12 @@ Workflow:
 
   0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
-  It's important to note that your customer export and subscriber export will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
+  You can load in your CSVs with the ReadMyFiles class, if you'd like. The four functions in here will clean up the exports. The default BigCommerce exports are a little ugly - we can drop some columns right off the bat, parse our dates and skip every other line in the customer file. 
   
-  1. Lets take a look at our first class, InitialExtraction, that lives in InitialExtraction.py. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
+  It's important to note that your customer and subscriber exports will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
+  
+  
+  1. Lets take a look at our first class, InitialExtraction. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
   
     assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and 
     records them in a new dataframe. Skips customers who have never ordered. This function aggregates the 
@@ -55,11 +58,12 @@ Specify your order and customer dataframes in the constructor. You'll also need 
     historical_purchase_df, historical_purchase_matrix = init_extract.make_historical_purchase_matrix(product_df)
     
     cold_start_feature_df = init_extract.assemble_cold_start_feature_df(subscriber_df)
-                                                   
+           
+           
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
   
-        mytransform = Transform(feature_df)
+      mytransform = Transform(feature_df)
       
 First, we need to make a binary variable for our target, churn. I define churn as not having placed an order in the past 365 days. You can specify your definition in the function:
 
@@ -81,16 +85,22 @@ The workflow for cold_start is mostly the same, except some of the transformatio
 
       coldtransform = Transform(cold_start_feature_df)
       coldtransform.binarize()
-      transformed = coldtransform.transform_cold_start_data()
+      coldtransform.transform_cold_start_data()
       
+The last function in here is do_NMF. The NMF class is not applicable to our cold_start problem since we are working with such limited data. NMF, or non-negative matrix factorization, links our products to our customers via latent "topics", or clusters of weighted similarity. 
+
+I made the executive decision to include this function within the Transform class. We are effectively treating the results of NMF as engineered features. Go ahead and save this version as our final transformation. If you'd like to see the 25 top products associated with your latent NMF topics, set get_top_products = True!
+
+        transformed = mytransform.do_NMF(historical_purchase_matrix, product_df, get_top_products=False)
+    
+    
 3. Cool, now that our data is transformed, we can split it up. Within the Splitter class, we have two functions: split_for_churn and split_for_cold_start. Let's just worry about churn for now, but know that you can split for cold_start by just switching the functions. In the constructor, specify your transformed, cleaned-up dataframe. 
 
         makesplits = Splitter(transformed)
         X_train, X_test, y_train, y_test = makesplits.split_for_churn(transformed)
       
-4. Nice! We're ready to move onto the NMF class. The NMF class is not applicable to our cold_start problem since we are working with such limited data. NMF, or non-negative matrix factorization, links our products to our customers via latent "topics", or clusters of weighted similarity. 
- 
-5. At this point, we have our original engineered feature matrix combined with our weights matrix. We're ready to model now! We're going to put this dataframe full of super-awesome features inside of a random forest. Go ahead and call the Model class.
+      
+4. At this point, we have our original engineered feature matrix combined with our weights matrix. We're ready to model now! We're going to put this dataframe full of super-awesome features inside of a random forest. Go ahead and call the Model class.
 
         mymodel = Model()
 
@@ -106,9 +116,13 @@ Finally, we're going to score the results of our test set against our prediction
 
         mymodel.score(X_test, y_test)
  
-The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that give us the best information gain per split, they are our "good predictors". You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
+The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
 
 ![](images/ex_feat_imp.png) 
+
+Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
+
+![](images/partial_dep1.png) 
 
 6. Let us revisit our old friend, cold_start. 
 As a reminder, we didn't do any NMF for this problem. We just have the transformed cold_start_df. Let's do a TT split on this bad boy. Make sure you're using the right dataframe :)
@@ -135,6 +149,9 @@ I digress. Time to model.
         coldModel.fit(X_train, y_train)
         coldModel.predict(X_test)
         coldModel.score(X_test, y_test)
+        
+![](images/partial_dep2.png) 
+
         
 How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean_squared_error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
       
