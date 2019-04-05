@@ -3,6 +3,7 @@
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
 Workflow:
+
   0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
   It's important to note that your customer export and subscriber export will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
