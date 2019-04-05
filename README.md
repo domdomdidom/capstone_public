@@ -106,7 +106,9 @@ Finally, we're going to score the results of our test set against our prediction
 
         mymodel.score(X_test, y_test)
  
-The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that give us the best information gain per split, they are our "good predictors". You'll see a graph of the top 15 feature importances for your model here. How'd we do?!
+The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that give us the best information gain per split, they are our "good predictors". You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
+
+![](images/ex_feat_imp.png) 
 
 6. Let us revisit our old friend, cold_start. 
 As a reminder, we didn't do any NMF for this problem. We just have the transformed cold_start_df. Let's do a TT split on this bad boy. Make sure you're using the right dataframe :)
@@ -117,9 +119,10 @@ As a reminder, we didn't do any NMF for this problem. We just have the transform
 Word! Ok, time to model. Just like the instructions above, we're going to fit, predict, and score our model EXCEPT FOR TWO BIG DIFFERENCES:
 
         1. We are using a REGRESSOR instead of a CLASSIFIER. Our target, time_as_customer, is a continuous variable. 
-        It didn't seem appropriate to use historical data to model a future event ('is this customer going to churn'), 
-        so we're switching up the question to 'how long was this person a customer'. It's a variation of the same question,
-        just framed in a way that makes a bit more sense with the data we're using. 
+        It didn't seem appropriate to use historical data to model a future event ('will this customer churn?'), 
+        so we're switching up the question to 'what is the lifespan of this customer?'. 
+        It's a variation of the same question, just framed in a way that makes a bit more sense 
+        with the data we're using. 
         
         2. We are using a GradientBoost instead of a RandomForest! Since we didn't do NMF, and we lost about half 
         of our original features, a more robust model seems to perform better here. Note that both GB and RF are 
