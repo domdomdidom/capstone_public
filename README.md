@@ -4,14 +4,14 @@ Being able to identify users who are at risk of churning is quite important - we
 
 Workflow:
 
-0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
+  0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
   You can load in your CSVs with the ReadMyFiles class, if you'd like. The four functions in here will clean up the exports. The default BigCommerce exports are a little ugly - we can drop some columns right off the bat, parse our dates and skip every other line in the customer file. 
   
   It's important to note that your customer and subscriber exports will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
   
   
-1. Lets take a look at our first class, InitialExtraction. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
+  1. Lets take a look at our first class, InitialExtraction. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
   
     assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and 
     records them in a new dataframe. Skips customers who have never ordered. This function aggregates the 
@@ -60,10 +60,10 @@ Specify your order and customer dataframes in the constructor. You'll also need 
     cold_start_feature_df = init_extract.assemble_cold_start_feature_df(subscriber_df)
            
            
-2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
+  2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
   
-      mytransform = Transform(feature_df)
+     mytransform = Transform(feature_df)
       
 First, we need to make a binary variable for our target, churn. I define churn as not having placed an order in the past 365 days. You can specify your definition in the function:
 
