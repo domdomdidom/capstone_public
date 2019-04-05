@@ -10,7 +10,9 @@ Workflow:
   
   1. Lets take a look at our first class, InitialExtraction, that lives in InitialExtraction.py. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
   
-    assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and records them in a new dataframe. Skips customers who have never ordered. This function aggregates the following statistics:
+    assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and 
+    records them in a new dataframe. Skips customers who have never ordered. This function aggregates the 
+    following statistics:
     
     'avg_order_value' - the mean price of all orders this customer has placed
     'days_since_last_order' - time lapsed between customer's most recent order and "today" (the date of last in order_df)
@@ -24,7 +26,8 @@ Workflow:
     'uses_coupons' - has the customer used at least one coupon (does not include cart-level discounts, binary variable)
     
     
-    make_historical_purchase_matrix : Loops through each customer and records their itemized purchase in an mxn sparse matrix where m is number of customers, and n is number of products in your product library. 
+    make_historical_purchase_matrix : Loops through each customer and records their itemized purchase 
+    in an mxn sparse matrix where m is number of customers, and n is number of products in your product library. 
     
     Ex)          widget    thingamabob      gizmo
           Larry     6           3             0
@@ -32,7 +35,10 @@ Workflow:
           Martin    1           0             0
     
     
-    assemble_cold_start_feature_df : This is all fine and dandy so far, but a real business use of this idea is to ultimately be able to predict who is at risk of leaving when we have *very little information about them*, such as in the case of a brand new customer. To assemble our cold start dataframe, we are only going to consider a customer's very first order for most of our feature engineering. 
+    assemble_cold_start_feature_df : This is all fine and dandy so far, but a real business use of this idea 
+    is to ultimately be able to predict who is at risk of leaving when we have *very little information about them*, 
+    such as in the case of a brand new customer. To assemble our cold start dataframe, we are only going to 
+    consider a customer's very first order for most of our feature engineering. 
     
     'avg_order_value' - the subtotal of a customer's first purchase
     'avg_price_item' - subtotal / number of items purchased
