@@ -152,3 +152,9 @@ I digress. Time to model.
 How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
       
       
+Discussion of Results:
+
+  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn: being a member of "Medical 50", etc.
+  
+  
+  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. 
