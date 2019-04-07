@@ -11,11 +11,11 @@ Workflow:
   It's important to note that your customer and subscriber exports will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
   
   
-  1. Lets take a look at our first class, InitialExtraction. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
+  1. Lets take a look at our first class, InitialExtraction. There are two functions in here: assemble_feature_dfs and make_historical_purchase_matrix. Here's an overview:
   
-    assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and 
-    records them in a new dataframe. Skips customers who have never ordered. This function aggregates the 
-    following statistics:
+    assemble_feature_dfs : Loops through each customer in your customer dataframe and aggregates statistics about him/her in      two dataframes: one for historical statistics and one for our "cold start" problem. 
+    
+    Here are the features engineered for our standard feature dataframe.
     
     'avg_order_value' - the mean price of all orders this customer has placed
     'days_since_last_order' - time lapsed between customer's most recent order and "today" (the date of last in order_df)
@@ -28,6 +28,15 @@ Workflow:
     'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
     'uses_coupons' - has the customer used at least one coupon (does not include cart-level discounts, binary variable)
     
+    A real business use of this idea is to ultimately be able to predict who is at risk of leaving when we have *very little       information about them*, such as in the case of a brand new customer. To assemble our cold start dataframe, we are only       going to consider a customer's very first order for most of our feature engineering. We've tossed any columns that may         potentially leak information.
+    
+    'avg_order_value' - the subtotal of a customer's first purchase
+    'avg_price_item' - subtotal / number of items purchased
+    'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
+    'uses_coupons' - did the customer use a coupon for their first order (does not include cart-level discounts, binary           variable)
+    
+    'time_as_customer' - this is our target. time lapsed since a customer joined (from custy_df) and their most recent order        (output in days). We consider all orders a customer has placed when we make this.
+  
     
     make_historical_purchase_matrix : Loops through each customer and records their itemized purchase 
     in an mxn sparse matrix where m is number of customers, and n is number of products in your product library. 
@@ -37,29 +46,13 @@ Workflow:
           Claire    0           0             1
           Martin    1           0             0
     
-    
-    assemble_cold_start_feature_df : This is all fine and dandy so far, but a real business use of this idea 
-    is to ultimately be able to predict who is at risk of leaving when we have *very little information about them*, 
-    such as in the case of a brand new customer. To assemble our cold start dataframe, we are only going to 
-    consider a customer's very first order for most of our feature engineering. 
-    
-    'avg_order_value' - the subtotal of a customer's first purchase
-    'avg_price_item' - subtotal / number of items purchased
-    'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
-    'uses_coupons' - did the customer use a coupon for their first order (does not include cart-level discounts, binary variable)
-    
-    'time_as_customer' - this is our target. time lapsed since a customer joined (from custy_df) and their most recent order (output in days). we consider all orders when we make this.
-    
 Specify your order and customer dataframes in the constructor. You'll also need to specify your product and subscriber dataframes in the following functions. Be sure you save these outputs as variables so we can access them later! These three functions take a considerable amount of time to run (for 500,000 orders and 70,000 customers, it takes about 25 minutes) - you may want to consider saving the outputs as CSVs if you're going to be working with them often.  
 
     init_extract = InitialExtraction(order_df, custy_df)
 
-    feature_df = init_extract.assemble_feature_df(subscriber_df)
+    feature_df, cold_start_feature_df = init_extract.assemble_feature_dfs(subscriber_df)
     historical_purchase_df, historical_purchase_matrix = init_extract.make_historical_purchase_matrix(product_df)
-    
-    cold_start_feature_df = init_extract.assemble_cold_start_feature_df(subscriber_df)
-           
-           
+                  
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
   
@@ -114,11 +107,15 @@ Next, let's do a predict on our test set:
  
 Finally, we're going to score the results of our test set against our predictions:
 
-        mymodel.score(X_test, y_test)
+        mymodel.score(X_test, y_test, sklearn=True)
  
 The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
 
 ![](images/ex_feat_imp.png) 
+
+Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. 
+
+![](images/pimp_imp.png) 
 
 Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
 
@@ -153,6 +150,6 @@ I digress. Time to model.
 ![](images/partial_dep2.png) 
 
         
-How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean_squared_error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
+How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
       
       
