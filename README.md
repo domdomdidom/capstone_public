@@ -55,11 +55,10 @@ Specify your order and customer dataframes in the constructor. You'll also need 
                   
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
-  
-     mytransform = Transform(feature_df)
       
 First, we need to make a binary variable for our target, churn. I define churn as not having placed an order in the past 365 days. You can specify your definition in the function:
 
+      mytransform = Transform(feature_df)
       mytransform.make_churn(365)
 
 Now let's binarize our Affiliation and Customer Group columns:
