@@ -1,4 +1,5 @@
 # Predicting Churn and Analyzing Customer Lifetime with a Combination of User, Sales and Marketing Data
+![](images/RockTape-Logo-R-B-RGB.png) 
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
@@ -52,6 +53,9 @@ Specify your order and customer dataframes in the constructor. You'll also need 
 
     feature_df, cold_start_feature_df = init_extract.assemble_feature_dfs(subscriber_df)
     historical_purchase_df, historical_purchase_matrix = init_extract.make_historical_purchase_matrix(product_df)
+    
+Here's our feature dataframe:
+![](images/features.png)
                   
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
@@ -85,7 +89,12 @@ I made the executive decision to include this function within the Transform clas
 
         transformed = mytransform.do_NMF(historical_purchase_matrix, product_df, get_top_products=False)
     
-    
+![](images/NMF.png)
+
+After we concat the original features with the NMF weights, here's what out data look like:
+
+![](images/features_plut_NMF.png)
+
 3. Cool, now that our data is transformed, we can split it up. Within the Splitter class, we have two functions: split_for_churn and split_for_cold_start. Let's just worry about churn for now, but know that you can split for cold_start by just switching the functions. In the constructor, specify your transformed, cleaned-up dataframe. 
 
         makesplits = Splitter(transformed)
@@ -108,23 +117,23 @@ Finally, we're going to score the results of our test set against our prediction
 
         mymodel.score(X_test, y_test, sklearn=True)
  
-The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
+The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. 
 
-![](images/ex_feat_imp.png) 
+Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available to the model. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. Here they are back-to-back. They look pretty similar, but you can see slight differences!
 
-Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. 
+![](images/feat_imp_vs_pimp.png) 
 
-![](images/pimp_imp.png) 
-
-Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
-
-![](images/partial_dep1.png) 
 
 6. Let us revisit our old friend, cold_start. 
 As a reminder, we didn't do any NMF for this problem. We just have the transformed cold_start_df. Let's do a TT split on this bad boy. Make sure you're using the right dataframe :)
 
        makesplits = Splitter()
        X_train, X_test, y_train, y_test= makesplits.split_for_cold_start(transformed)
+       
+As a reminder, our data look like this:
+
+![](images/cold_start.png) 
+
        
 Word! Ok, time to model. Just like the instructions above, we're going to fit, predict, and score our model EXCEPT FOR TWO BIG DIFFERENCES:
 
@@ -146,15 +155,23 @@ I digress. Time to model.
         coldModel.predict(X_test)
         coldModel.score(X_test, y_test)
         
-![](images/partial_dep2.png) 
+Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
 
-        
-How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
+![](images/pd_plot_gbr.png) 
+
+
+    
+How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Root Mean Squared Error. Our baseline_mse is just the root mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 15-20% better than our baseline! Yay improvement! 
       
       
 Discussion of Results:
 
-  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn: being a member of "Medical 50", etc.
+  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn and discovered that the categorical features seemed to be more important than the continuous features. Neat! It looks like getting free samples doesn't help keep our customers loyal, either. That's pretty interesting. 
   
   
-  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. 
+  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. Using a GradientBoostRegressor, we were able to improve predicting new customers lifetimes by 15%. 
+  
+    New chiropractors are more likely to stick around longer
+    Using a coupon with a first order positively correlates with lifespan
+    Buying expensive items contributes negatively to lifespan
+
