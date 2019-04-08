@@ -6,13 +6,16 @@ Workflow:
 
   0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
-  It's important to note that your customer export and subscriber export will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
+  You can load in your CSVs with the ReadMyFiles class, if you'd like. The four functions in here will clean up the exports. The default BigCommerce exports are a little ugly - we can drop some columns right off the bat, parse our dates and skip every other line in the customer file. 
   
-  1. Lets take a look at our first class, InitialExtraction, that lives in InitialExtraction.py. There are three functions in here: assemble_feature_df, make_historical_purchase_matrix and assemble_cold_start_feature_df. Here's an overview:
+  It's important to note that your customer and subscriber exports will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
   
-    assemble_feature_df : Loops through each customer in your customer dataframe, does initial calculations and 
-    records them in a new dataframe. Skips customers who have never ordered. This function aggregates the 
-    following statistics:
+  
+  1. Lets take a look at our first class, InitialExtraction. There are two functions in here: assemble_feature_dfs and make_historical_purchase_matrix. Here's an overview:
+  
+    assemble_feature_dfs : Loops through each customer in your customer dataframe and aggregates statistics about him/her in      two dataframes: one for historical statistics and one for our "cold start" problem. 
+    
+    Here are the features engineered for our standard feature dataframe.
     
     'avg_order_value' - the mean price of all orders this customer has placed
     'days_since_last_order' - time lapsed between customer's most recent order and "today" (the date of last in order_df)
@@ -25,6 +28,15 @@ Workflow:
     'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
     'uses_coupons' - has the customer used at least one coupon (does not include cart-level discounts, binary variable)
     
+    A real business use of this idea is to ultimately be able to predict who is at risk of leaving when we have *very little       information about them*, such as in the case of a brand new customer. To assemble our cold start dataframe, we are only       going to consider a customer's very first order for most of our feature engineering. We've tossed any columns that may         potentially leak information.
+    
+    'avg_order_value' - the subtotal of a customer's first purchase
+    'avg_price_item' - subtotal / number of items purchased
+    'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
+    'uses_coupons' - did the customer use a coupon for their first order (does not include cart-level discounts, binary           variable)
+    
+    'time_as_customer' - this is our target. time lapsed since a customer joined (from custy_df) and their most recent order        (output in days). We consider all orders a customer has placed when we make this.
+  
     
     make_historical_purchase_matrix : Loops through each customer and records their itemized purchase 
     in an mxn sparse matrix where m is number of customers, and n is number of products in your product library. 
@@ -34,35 +46,19 @@ Workflow:
           Claire    0           0             1
           Martin    1           0             0
     
-    
-    assemble_cold_start_feature_df : This is all fine and dandy so far, but a real business use of this idea 
-    is to ultimately be able to predict who is at risk of leaving when we have *very little information about them*, 
-    such as in the case of a brand new customer. To assemble our cold start dataframe, we are only going to 
-    consider a customer's very first order for most of our feature engineering. 
-    
-    'avg_order_value' - the subtotal of a customer's first purchase
-    'avg_price_item' - subtotal / number of items purchased
-    'subscriber_newsletter' - does the customer subscribe to our newsletter (binary variable)
-    'uses_coupons' - did the customer use a coupon for their first order (does not include cart-level discounts, binary variable)
-    
-    'time_as_customer' - this is our target. time lapsed since a customer joined (from custy_df) and their most recent order (output in days). we consider all orders when we make this.
-    
 Specify your order and customer dataframes in the constructor. You'll also need to specify your product and subscriber dataframes in the following functions. Be sure you save these outputs as variables so we can access them later! These three functions take a considerable amount of time to run (for 500,000 orders and 70,000 customers, it takes about 25 minutes) - you may want to consider saving the outputs as CSVs if you're going to be working with them often.  
 
     init_extract = InitialExtraction(order_df, custy_df)
 
-    feature_df = init_extract.assemble_feature_df(subscriber_df)
+    feature_df, cold_start_feature_df = init_extract.assemble_feature_dfs(subscriber_df)
     historical_purchase_df, historical_purchase_matrix = init_extract.make_historical_purchase_matrix(product_df)
-    
-    cold_start_feature_df = init_extract.assemble_cold_start_feature_df(subscriber_df)
-                                                   
+                  
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
-  
-        mytransform = Transform(feature_df)
       
 First, we need to make a binary variable for our target, churn. I define churn as not having placed an order in the past 365 days. You can specify your definition in the function:
 
+      mytransform = Transform(feature_df)
       mytransform.make_churn(365)
 
 Now let's binarize our Affiliation and Customer Group columns:
@@ -81,16 +77,22 @@ The workflow for cold_start is mostly the same, except some of the transformatio
 
       coldtransform = Transform(cold_start_feature_df)
       coldtransform.binarize()
-      transformed = coldtransform.transform_cold_start_data()
+      coldtransform.transform_cold_start_data()
       
+The last function in here is do_NMF. The NMF class is not applicable to our cold_start problem since we are working with such limited data. NMF, or non-negative matrix factorization, links our products to our customers via latent "topics", or clusters of weighted similarity. 
+
+I made the executive decision to include this function within the Transform class. We are effectively treating the results of NMF as engineered features. Go ahead and save this version as our final transformation. If you'd like to see the 25 top products associated with your latent NMF topics, set get_top_products = True!
+
+        transformed = mytransform.do_NMF(historical_purchase_matrix, product_df, get_top_products=False)
+    
+    
 3. Cool, now that our data is transformed, we can split it up. Within the Splitter class, we have two functions: split_for_churn and split_for_cold_start. Let's just worry about churn for now, but know that you can split for cold_start by just switching the functions. In the constructor, specify your transformed, cleaned-up dataframe. 
 
         makesplits = Splitter(transformed)
         X_train, X_test, y_train, y_test = makesplits.split_for_churn(transformed)
       
-4. Nice! We're ready to move onto the NMF class. The NMF class is not applicable to our cold_start problem since we are working with such limited data. NMF, or non-negative matrix factorization, links our products to our customers via latent "topics", or clusters of weighted similarity. 
- 
-5. At this point, we have our original engineered feature matrix combined with our weights matrix. We're ready to model now! We're going to put this dataframe full of super-awesome features inside of a random forest. Go ahead and call the Model class.
+      
+4. At this point, we have our original engineered feature matrix combined with our weights matrix. We're ready to model now! We're going to put this dataframe full of super-awesome features inside of a random forest. Go ahead and call the Model class.
 
         mymodel = Model()
 
@@ -104,9 +106,19 @@ Next, let's do a predict on our test set:
  
 Finally, we're going to score the results of our test set against our predictions:
 
-        mymodel.score(X_test, y_test)
+        mymodel.score(X_test, y_test, sklearn=True)
  
-The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that give us the best information gain per split, they are our "good predictors". You'll see a graph of the top 15 feature importances for your model here. How'd we do?!
+The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. How'd we do?! Here's a graph of my feautre importances:
+
+![](images/ex_feat_imp.png) 
+
+Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. 
+
+![](images/pimp_imp.png) 
+
+Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
+
+![](images/partial_dep1.png) 
 
 6. Let us revisit our old friend, cold_start. 
 As a reminder, we didn't do any NMF for this problem. We just have the transformed cold_start_df. Let's do a TT split on this bad boy. Make sure you're using the right dataframe :)
@@ -117,9 +129,10 @@ As a reminder, we didn't do any NMF for this problem. We just have the transform
 Word! Ok, time to model. Just like the instructions above, we're going to fit, predict, and score our model EXCEPT FOR TWO BIG DIFFERENCES:
 
         1. We are using a REGRESSOR instead of a CLASSIFIER. Our target, time_as_customer, is a continuous variable. 
-        It didn't seem appropriate to use historical data to model a future event ('is this customer going to churn'), 
-        so we're switching up the question to 'how long was this person a customer'. It's a variation of the same question,
-        just framed in a way that makes a bit more sense with the data we're using. 
+        It didn't seem appropriate to use historical data to model a future event ('will this customer churn?'), 
+        so we're switching up the question to 'what is the lifespan of this customer?'. 
+        It's a variation of the same question, just framed in a way that makes a bit more sense 
+        with the data we're using. 
         
         2. We are using a GradientBoost instead of a RandomForest! Since we didn't do NMF, and we lost about half 
         of our original features, a more robust model seems to perform better here. Note that both GB and RF are 
@@ -133,6 +146,15 @@ I digress. Time to model.
         coldModel.predict(X_test)
         coldModel.score(X_test, y_test)
         
-How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean_squared_error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
+![](images/partial_dep2.png) 
+
+        
+How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Mean Squared Error. Our baseline_mse is just the mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 33% better than our baseline! Yay improvement! 
       
       
+Discussion of Results:
+
+  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn: being a member of "Medical 50", etc.
+  
+  
+  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. 
