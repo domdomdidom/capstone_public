@@ -54,7 +54,7 @@ Specify your order and customer dataframes in the constructor. You'll also need 
     historical_purchase_df, historical_purchase_matrix = init_extract.make_historical_purchase_matrix(product_df)
     
 Here's our feature dataframe:
-![](images/features)
+![](images/features.png)
                   
   2. Yay! Hopefully our feature extractions didn't take too long to compile. Let's move onto our next class, Transform. 
   In the constructor, specify which feature_df you'd like to use (either the vanilla feature_df, which I am hereby going to just call feature_df, or your cold_start_feature_df). The workflows for both are slightly different, I'm going to go over the feature_df first. 
@@ -88,11 +88,11 @@ I made the executive decision to include this function within the Transform clas
 
         transformed = mytransform.do_NMF(historical_purchase_matrix, product_df, get_top_products=False)
     
-![](images/NMF)
+![](images/NMF.png)
 
 So here is our new feature dataframe!
 
-![](images/features_plut_NMF)
+![](images/features_plut_NMF.png)
 
 3. Cool, now that our data is transformed, we can split it up. Within the Splitter class, we have two functions: split_for_churn and split_for_cold_start. Let's just worry about churn for now, but know that you can split for cold_start by just switching the functions. In the constructor, specify your transformed, cleaned-up dataframe. 
 
