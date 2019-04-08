@@ -90,7 +90,7 @@ I made the executive decision to include this function within the Transform clas
     
 ![](images/NMF.png)
 
-So here is our new feature dataframe!
+After we concat the original features with the NMF weights, here's what out data look like:
 
 ![](images/features_plut_NMF.png)
 
@@ -118,7 +118,7 @@ Finally, we're going to score the results of our test set against our prediction
  
 The score function will output accuracy, precision and recall scores. It also calculates the feature importances. The top feature importances are those features that did the best job of "unmixing" the labels or predicting the target. They provided the most significant reduction in gini impurity per split. You'll see a graph of the top 15 feature importances for your model here. 
 
-Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. Here they are back-to-back. They look pretty similar, but you can see slight differences!
+Permutation importances show the other side of feature importance - the P.I. score decreases when a feature is not available to the model. It's a good way of validating our feature importances. The top features hilighted by our permutation importance graph and our feature importance graph should be mostly the same. I used RFpimp to validate the Sklearn feature importances. Here they are back-to-back. They look pretty similar, but you can see slight differences!
 
 ![](images/feat_imp_vs_pimp.png) 
 
@@ -128,6 +128,11 @@ As a reminder, we didn't do any NMF for this problem. We just have the transform
 
        makesplits = Splitter()
        X_train, X_test, y_train, y_test= makesplits.split_for_cold_start(transformed)
+       
+As a reminder, our data look like this:
+
+![](images/cold_start.png) 
+
        
 Word! Ok, time to model. Just like the instructions above, we're going to fit, predict, and score our model EXCEPT FOR TWO BIG DIFFERENCES:
 
