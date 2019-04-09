@@ -3,7 +3,15 @@
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
-Workflow:
+# Packages Used:
+Sklearn
+RFpimp
+Pandas
+Numpy
+Flask
+Pickle
+
+# Workflow:
 
   0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
@@ -160,18 +168,43 @@ Feature Importances are good, but not great. Sometimes the "unmixing" can be a r
 ![](images/pd_plot_gbr.png) 
 
 
-    
 How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Root Mean Squared Error. Our baseline_mse is just the root mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 15-20% better than our baseline! Yay improvement! 
-      
-      
-Discussion of Results:
 
-  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn and discovered that the categorical features seemed to be more important than the continuous features. Neat! It looks like getting free samples doesn't help keep our customers loyal, either. That's pretty interesting. 
-  
+
+# Additional Functions:
+
+In my package, there is a function called get_items_associated. This function takes in your historical purchase matrix, and a trimmed feature dataframe narrowed down to a specific customer faction you'd like to examine. It uses linear algebra (NMF) to compile a list of the top products for this faction. 
+
+You can toggle the hyperparameters of this function, but the defaults are as follows. For example, if you'd like to examine only Chiropractors who have churned, but were customers for at least 2 years prior, you would do:
+
+      sliced_df = feature_df[ (feature_df['Medical - Chiropractor'] == 1) & (feature_df['day_since_last_order] > 365) & (feature_df['time_as_customer']) ]
+      
+      get_items_associated(historical_purchase_matrix, sliced_df, product_df, n_topics=5, max_iters=350, n_churniest_topics=3, n_churniest_items=25)
+      
+      
+Our results:
+
+      [('RockBand', 3), ('2" Digital Camouflage * - DISCONTINUED- DO NOT USE', 3), ('KneeCaps - Knee Support and Protection', 3), ('2" Black Skull *', 3), ('2" Black Logo', 3), ('2" Pink Camouflage', 2), ('2" Pink Logo (discontinued as of 11/11/2016 df)', 2), ('2" Purple', 2), ('2" H2O Black - extra sticky', 2), ('Talons - Hand Protection', 2), ('4" H2O Mini Big Daddy Black Logo', 2), ('Assassins Knee Sleeves - Manifesto', 2), ('Coffee Cup', 2), ('2" Bulk H2O Black Logo - extra sticky', 2), ('RockSauce - Skin Prep & Pain* Reliever *', 2), ('Power Taping Posters', 2), ("Product Brochure * (DO NOT USE - see 'brochure' for retail/medical options df 3.13.17)", 2), ('Rehab Poster *', 2), ('2" H2O Black Logo - extra sticky', 2), ('RockTape Brochure', 2), ('Power Sample Strips Black', 2), ('pHast Legs 90ct - The Paleo Supplement - discontinued 06/03/2014', 2), ('2" Yellow * DISCONTINUED PRODUCT', 2), ('2" Green Camouflage', 2), ('2" Orange *', 2)]
+      
+These seem to be largely discontinued products (an asterisk also denotes discontinutiy), which we may expect from looking at people who have churned. I would interpret these as our "weakest products", ones that actively contribute to customer dissatisfaction or fall short of expectations in some way. 
+
+You can slice your dataframe in an infinite number of configurations to grab useful product stats!
+      
+# Discussion of Results:
+
+  Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn.
+
+    It looks like getting free samples and testers doesn't help keep our customers loyal
+    Customer type is more important that a customer's order history
   
   This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. Using a GradientBoostRegressor, we were able to improve predicting new customers lifetimes by 15%. 
   
     New chiropractors are more likely to stick around longer
     Using a coupon with a first order positively correlates with lifespan
     Buying expensive items contributes negatively to lifespan
+    
+# Criticisms and Future Work
 
+  RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
+  
+  I'm currently working on a web app where you can input a new customer's stats, and get an estimate of time they will be a customer! If you multiply that by their average order value, you can get an estimate of their lifetime value!
