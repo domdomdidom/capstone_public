@@ -177,16 +177,29 @@ In my package, there is a function called get_items_associated. This function ta
 
 You can toggle the hyperparameters of this function, but the defaults are as follows. For example, if you'd like to examine only Chiropractors who have churned, but were customers for at least 2 years prior, you would do:
 
-      sliced_df = feature_df[ (feature_df['Medical - Chiropractor'] == 1) & (feature_df['day_since_last_order] > 365) & (feature_df['time_as_customer']) ]
+      sliced_df = feature_df[ (feature_df['Medical - Chiropractor'] == 1) & 
+                              (feature_df['day_since_last_order] > 365) &
+                               (feature_df['time_as_customer']) ]
       
-      get_items_associated(historical_purchase_matrix, sliced_df, product_df, n_topics=5, max_iters=350, n_churniest_topics=3, n_churniest_items=25)
+      get_items_associated(historical_purchase_matrix, 
+                          sliced_df, product_df, n_topics=5, max_iters=350, 
+                          n_churniest_topics=3, n_churniest_items=25)
       
       
 Our results:
 
-      [('RockBand', 3), ('2" Digital Camouflage * - DISCONTINUED- DO NOT USE', 3), ('KneeCaps - Knee Support and Protection', 3), ('2" Black Skull *', 3), ('2" Black Logo', 3), ('2" Pink Camouflage', 2), ('2" Pink Logo (discontinued as of 11/11/2016 df)', 2), ('2" Purple', 2), ('2" H2O Black - extra sticky', 2), ('Talons - Hand Protection', 2), ('4" H2O Mini Big Daddy Black Logo', 2), ('Assassins Knee Sleeves - Manifesto', 2), ('Coffee Cup', 2), ('2" Bulk H2O Black Logo - extra sticky', 2), ('RockSauce - Skin Prep & Pain* Reliever *', 2), ('Power Taping Posters', 2), ("Product Brochure * (DO NOT USE - see 'brochure' for retail/medical options df 3.13.17)", 2), ('Rehab Poster *', 2), ('2" H2O Black Logo - extra sticky', 2), ('RockTape Brochure', 2), ('Power Sample Strips Black', 2), ('pHast Legs 90ct - The Paleo Supplement - discontinued 06/03/2014', 2), ('2" Yellow * DISCONTINUED PRODUCT', 2), ('2" Green Camouflage', 2), ('2" Orange *', 2)]
+      [('RockBand', 3), ('2" Digital Camouflage * - DISCONTINUED- DO NOT USE', 3), 
+      ('KneeCaps - Knee Support and Protection', 3), ('2" Black Skull *', 3), 
+      ('2" Black Logo', 3), ('2" Pink Camouflage', 2), ('2" Pink Logo (discontinued as of 11/11/2016 df)', 2), 
+      ('2" Purple', 2), ('2" H2O Black - extra sticky', 2), ('Talons - Hand Protection', 2), 
+      ('4" H2O Mini Big Daddy Black Logo', 2), ('Assassins Knee Sleeves - Manifesto', 2), ('Coffee Cup', 2), 
+      ('2" Bulk H2O Black Logo - extra sticky', 2), ('RockSauce - Skin Prep & Pain* Reliever *', 2), 
+      ('Power Taping Posters', 2), ("Product Brochure * (DO NOT USE - see 'brochure' for retail/medical options df 3.13.17)", 2), ('Rehab Poster *', 2), ('2" H2O Black Logo - extra sticky', 2), 
+      ('RockTape Brochure', 2), ('Power Sample Strips Black', 2), 
+      ('pHast Legs 90ct - The Paleo Supplement - discontinued 06/03/2014', 2), 
+      ('2" Yellow * DISCONTINUED PRODUCT', 2), ('2" Green Camouflage', 2), ('2" Orange *', 2)]
       
-These seem to be largely discontinued products (an asterisk also denotes discontinutiy), which we may expect from looking at people who have churned. I would interpret these as our "weakest products", ones that actively contribute to customer dissatisfaction or fall short of expectations in some way. 
+These seem to be largely discontinued products (an asterisk also denotes discontinutiy), which we may expect from looking at people who have churned. I would interpret these as our "weakest products" - ones that actively contribute to customer dissatisfaction or fall short of expectations in some way. 
 
 You can slice your dataframe in an infinite number of configurations to grab useful product stats!
       
@@ -203,7 +216,7 @@ You can slice your dataframe in an infinite number of configurations to grab use
     Using a coupon with a first order positively correlates with lifespan
     Buying expensive items contributes negatively to lifespan
     
-# Criticisms and Future Work
+# Criticisms and Future Work:
 
   RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
   
