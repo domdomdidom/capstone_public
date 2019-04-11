@@ -3,7 +3,7 @@
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
-Take a look at [my super-cool webapp](http://52.90.122.192:1212/churning_man) I pay good money for Amazon to host this bad boy! Please excuse the Internet 1.0 CSS.
+Take a look at [my super-cool webapp!](http://52.90.122.192:1212/churning_man) I pay good money for Amazon to host this bad boy! Please excuse the Internet 1.0 CSS.
 
 # Packages Used:
     Sklearn
