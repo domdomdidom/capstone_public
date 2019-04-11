@@ -3,6 +3,8 @@
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
+Take a look at my webapp ( http://52.90.122.192:1212/churning_man ) I pay good money for Amazon to host this bad boy! Please excuse the CSS.
+
 # Packages Used:
     Sklearn
     RFpimp
@@ -209,15 +211,15 @@ You can slice your dataframe in an infinite number of configurations to grab use
 
     It looks like getting free samples and testers doesn't help keep our customers loyal
     Customer type is more important that a customer's order history
+    Our students churn at a higher rate than most
   
   This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. Using a GradientBoostRegressor, we were able to improve predicting new customers lifetimes by 15%. 
   
     New chiropractors are more likely to stick around longer
     Using a coupon with a first order positively correlates with lifespan
     Buying expensive items contributes negatively to lifespan
+    Free or reduced shipping doesn't seem to extend lifetime
     
 # Criticisms and Future Work:
 
   RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
-  
-  I'm currently working on a web app where you can input a new customer's stats, and get an estimate of time they will be a customer! If you multiply that by their average order value, you can get an estimate of their lifetime value!
