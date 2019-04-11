@@ -1,0 +1,96 @@
+<html>
+
+
+<head>
+    <link rel='stylesheet' href='static/churning_man.css'/>
+
+    <title> churning_man </title>
+</head>
+
+<body> 
+    <center>
+    <img src= 'https://upload.wikimedia.org/wikipedia/commons/f/f5/Burning-Man.svg' align=top/>
+    </center>
+    <ul>
+
+        <li>
+            <a href = "https://github.com/domdomdidom/capstone_public"> Look at my full project on GitHub! </a>
+        </li>
+
+        <li>
+            <a href='https://www.linkedin.com/in/dominique-vanden-dries-296b21147/'> Look at my LinkedIn! Give me a job! </a>
+
+        </li>
+    </ul>
+    
+
+    <h1> ~ Churning Man ~ 
+    <br> 
+    <br> 
+     Wouldn't it be sick if you could predict a customer's lifetime just from their first order? </h1>
+
+    <div id='controls'>
+        <div>
+            <label>Average Price of Item</label>
+            <input id='avg_price_item' type="number" value="10.00"/>
+        </div>
+        <div>
+            <label>Subtotal</label>
+            <input id='subtotal' type="number" value="183.47"/>
+        </div>
+        <div class='dropdown'>
+            <label>Affiliation</label>
+                <select id = "affiliation">
+                    <option value = "Medical - Chiropractor">Medical - Chiropractor</option>
+                    <option value = "Medical - Massage Therapist">Medical - Massage Therapist</option>
+                    <option value = "Medical - Physical Therapist">Medical - Physical Therapist</option>
+                    <option value = "Medical - Athletic Trainer (Certified)">Medical - Athletic Trainer (Certified)</option>
+                    <option value = "Medical - Acupuncturist">Medical - Acupuncturist</option>
+                </select>
+           </div>
+        <div class='dropdown'>
+         <label>Customer Group</label>
+             <select id = "customer_group">
+               <option value = "Medical 40">Medical 40</option>
+               <option value = "Medical 50">Medical 50</option>
+             </select>
+        </div>
+        <div class='dropdown'>
+            <label>Subscribes to Newsletter?</label>
+                <select id = "subscriber_newsletter">
+                    <option value = 1>Yes</option>
+                    <option value = 0>No</option>
+                </select>
+        </div>
+        <div class='dropdown'>
+            <label>Uses Coupons?</label>
+                <select id = "uses_coupons">
+                    <option value = 0>No</option>
+                    <option value = 1>Yes</option>
+                </select>
+        </div>
+        <div>
+            <label>Shipping Charge</label>
+            <input id='ship' type="number" value="4.99"/>
+        </div>
+    </div>
+
+    <div id='inference-button'>
+        <div>
+            <button id="evaluate"> How long is this customer's expected lifetime? </button>
+        </div>
+        <div>
+            <input id="predictor" type="text" readonly />
+        </div>
+    </div>
+</div>
+<center>
+<img src= 'http://www.rocktape.com/wp-content/uploads/2017/07/RockTape-Logo-R-W-RGB.png' align = middle height="50" width="500"/>
+</center>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/1.35.2/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="static/churning_man.js"></script>
+
+</body>
+
+</html>

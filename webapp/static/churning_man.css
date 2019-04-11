@@ -1,0 +1,91 @@
+body {
+    background-color: #cccccc;
+}
+
+img {
+    height: 185px;
+    width: 185px;
+}
+
+li {
+    font-family: 'Helvetica';
+    font-size: 20px;
+    color: black;
+}
+
+
+h1 {
+    font-family: 'Helvetica';
+    font-size: 20px;
+    color: black;
+    background-color: powderblue;
+    border: 3px double rgb(177, 27, 27);
+    margin: 25px;
+    padding: 25px;
+    text-align: center;
+}
+
+h2 {
+    font-family: 'Helvetica';
+    font-size: 15px;
+    color: black;
+    background-color: powderblue;
+    border: 3px double rgb(177, 27, 27);
+    margin: 25px;
+    padding: 25px;
+    text-align: center;
+}
+
+#controls {
+    font-family: 'Helvetica';
+    font-size: 17px;
+    background-color: powderblue;
+    text-align: center;
+    border: 3px double rgb(177, 27, 27);
+    margin: 20px;
+    padding: 20px;
+}
+
+label {
+    display: inline-block;
+    width: 300px;
+    font-size: 1em;
+}
+
+input {
+    background-color: powderblue;
+    border: 1px double rgb(177, 27, 27);
+    width: 150px;
+    font-size: 1em
+    ;
+}
+
+#controls .dropdown select{
+    background: transparent;
+    line-height: 1;
+    border: 1px double rgb(177, 27, 27);
+    padding: 0;
+    border-radius: 0;
+    width: 150px;
+    z-index: 10;
+    font-size: 1em;
+  }
+
+#inference-button {
+    font-family: 'Helvetica';
+    background-color: powderblue;
+    text-align: center;
+    border: 3px double rgb(177, 27, 27);
+    margin: 25px;
+    padding: 15px;
+}
+
+#evaluate {
+    font-family: 'Helvetica';
+    font-size: 20px;
+    text-align: center;
+    color: whitesmoke;
+    background-color: rgb(177, 27, 27);
+    margin: 15px;
+    padding: 15px;
+}
