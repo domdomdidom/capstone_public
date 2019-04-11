@@ -3,7 +3,7 @@
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
-Take a look at my webapp ( http://52.90.122.192:1212/churning_man ) I pay good money for Amazon to host this bad boy! Please excuse the CSS.
+Take a look at [my super-cool webapp!](http://52.90.122.192:1212/churning_man) I pay good money for Amazon to host this bad boy! Please excuse the Internet 1.0 CSS.
 
 # Packages Used:
     Sklearn
@@ -225,3 +225,5 @@ You can slice your dataframe in an infinite number of configurations to grab use
 # Criticisms and Future Work:
 
   RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
+  
+  Create a confusion matrix for promos like free shipping & discount use. We're losing money by offering free shipping with no benefit to us.
