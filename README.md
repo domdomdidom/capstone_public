@@ -225,3 +225,5 @@ You can slice your dataframe in an infinite number of configurations to grab use
 # Criticisms and Future Work:
 
   RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
+  
+  Create a confusion matrix for promos like free shipping & discount use. We're losing money by offering free shipping with no benefit to us.
