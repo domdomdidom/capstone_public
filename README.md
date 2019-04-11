@@ -21,7 +21,9 @@ Take a look at my webapp ( http://52.90.122.192:1212/churning_man ) I pay good m
   
   It's important to note that your customer and subscriber exports will only reflect the most up-to-date information for your customers. We don't have access to historical data, unfortunately, so we make the assumption that there has not been any historical changes that will afffect our results (such as a customer's 'customer_group' changing, or unsubscribing from our newsletter). We can access the historical order data, so no worries there! 
   
+ ![](images/mydata.png)
   
+ 
   1. Lets take a look at our first class, InitialExtraction. There are two functions in here: assemble_feature_dfs and make_historical_purchase_matrix. Here's an overview:
   
     assemble_feature_dfs : Loops through each customer in your customer dataframe and aggregates statistics about him/her in      two dataframes: one for historical statistics and one for our "cold start" problem. 
