@@ -2,13 +2,14 @@
 ![](images/RockTape-Logo-R-B-RGB.png) 
 
 # Table of Contents
-1. [Packages Used](#Packages-Used)
-2. [Example2](#example2)
-3. [Third Example](#third-example)
+1. [Introduction](#Introduction)
+2. [Packages Used](#Packages-Used)
+3. [Workflow](#Workflow)
+4. [Additional Functions](#Additional-Functions)
+5. [Discussion of Results](#Discussion-of-Results)
+6. [Criticisms and Future Work](#Criticisms-and-Future-Work)
 
-## Example2
-## Third Example
-
+# Introduction
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
 Take a look at [my super-cool webapp!](http://52.90.122.192:1212/churning_man) I pay good money for Amazon to host this bad boy! Please excuse the Internet 1.0 CSS. The webapp vectorizes all the inputs into an array, runs the array through the model.predict() function, and returns the output.
@@ -21,7 +22,7 @@ Take a look at [my super-cool webapp!](http://52.90.122.192:1212/churning_man) I
     Flask
     Pickle
 
-# Workflow:
+# Workflow
 
   0. First things first - we need to get the raw data from BigCommerce into a usable form. Export all your customers from BigCommerce, as well as your order data. These exports will probably take a while, depending on how large your company is. Now, export your entire product catalog. Finally, head over to your 3rd party marketing tab and export your newsletter subscribers. All four exports should be in a CSV.
   
@@ -183,7 +184,7 @@ Feature Importances are good, but not great. Sometimes the "unmixing" can be a r
 How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Root Mean Squared Error. Our baseline_mse is just the root mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 15-20% better than our baseline! Yay improvement! 
 
 
-# Additional Functions:
+# Additional Functions
 
 In my package, there is a function called get_items_associated. This function takes in your historical purchase matrix, and a trimmed feature dataframe narrowed down to a specific customer faction you'd like to examine. It uses linear algebra (NMF) to compile a list of the top products for this faction. 
 
@@ -215,7 +216,7 @@ These seem to be largely discontinued products (an asterisk also denotes discont
 
 You can slice your dataframe in an infinite number of configurations to grab useful product stats!
       
-# Discussion of Results:
+# Discussion of Results
 
   Using the vanilla feature_df, I was able to correctly classify a customer as churned/not churned about 80% of the time (relitave to a baseline of about a 50/50 split, equivalent to a random guess). We used NMF to extract 5 latent features, and wrapped all our features with a random forest classifier. We were able to identify certain features that weighed more heavily on a customer's liklihood to churn.
 
@@ -223,14 +224,14 @@ You can slice your dataframe in an infinite number of configurations to grab use
     Customer type is more important that a customer's order history
     Our students churn at a higher rate than most
   
-  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. Using a GradientBoostRegressor, we were able to improve predicting new customers lifetimes by 15%. 
+  This is all well and good, but the real business use case of this project is forecasting a new customer's lifetime, where we have limited information about them. We had access to way less features for this task and we weren't able to use NMF to identify those latent features. Using a GradientBoostRegressor, we were able to improve predicting new customers lifetimes by 15%. Take a look at the Partial Dependency Plots above to see how the top 6 features affect a customer's lifetime!
   
     New chiropractors are more likely to stick around longer
     Using a coupon with a first order positively correlates with lifespan
     Buying expensive items contributes negatively to lifespan
     Free or reduced shipping doesn't seem to extend lifetime
     
-# Criticisms and Future Work:
+# Criticisms and Future Work
 
   RockTape stopped dividing up their affiliations with such fine granularity in 2015. There may be some unavoidable information leakage here, since people who are assigned to "antiquated" affiliations are by default, older customers. 
   
