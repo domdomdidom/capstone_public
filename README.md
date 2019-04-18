@@ -2,7 +2,7 @@
 ![](images/RockTape-Logo-R-B-RGB.png) 
 
 # Table of Contents
-1. [Packages Used](#Packages-Used:)
+1. [Packages Used](#Packages-Used)
 2. [Example2](#example2)
 3. [Third Example](#third-example)
 
@@ -13,7 +13,7 @@ Being able to identify users who are at risk of churning is quite important - we
 
 Take a look at [my super-cool webapp!](http://52.90.122.192:1212/churning_man) I pay good money for Amazon to host this bad boy! Please excuse the Internet 1.0 CSS. The webapp vectorizes all the inputs into an array, runs the array through the model.predict() function, and returns the output.
 
-## Packages Used:
+# Packages Used
     Sklearn
     RFpimp
     Pandas
