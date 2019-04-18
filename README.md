@@ -167,7 +167,7 @@ I digress. Time to model.
         coldModel.predict(X_test)
         coldModel.score(X_test, y_test)
         
-Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
+Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. For example, being a chiropractor has a positive impact on lifetime. Interestingly enough, free shipping on a first order doesn't seem to have much of an effect on lifetime. 
 
 ![](images/pdplots.png) 
 
