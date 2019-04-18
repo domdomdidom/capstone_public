@@ -1,7 +1,14 @@
 # Using Machine Learning to Predict Churn and Analyze Customer Lifetime
 ![](images/RockTape-Logo-R-B-RGB.png) 
 
-{:toc}
+# Table of Contents
+1. [Packages Used:](#Packages Used:)
+2. [Example2](#example2)
+3. [Third Example](#third-example)
+
+## Packages Used:
+## Example2
+## Third Example
 
 Being able to identify users who are at risk of churning is quite important - we can segment our customer base & pivot our marketing tactics to certain users, or spend resources to improve areas where a business is weak. BigCommerce tracks lots of stats for sales, customers and 3rd party marketing plugins. In this repo, I'll explore some of these data and see if we can gain some useful insights on identifying potential churn!
 
