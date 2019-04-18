@@ -169,7 +169,7 @@ I digress. Time to model.
         
 Feature Importances are good, but not great. Sometimes the "unmixing" can be a result of random chance. Feature Importances are also relitave to the amount of columns we have. If we have two columns that encode similar information, the feature importances will be artifically lower because of the sheer number of columns, even though this is good information. Our partial dependency plots show us exactly how our outcome changes with that particular variable. 
 
-![](images/pd_plot_gbr.png) 
+![](images/pdplots.png) 
 
 
 How'd we do this time?!?! Since we aren't scoring a classifier here, we don't have accuracy, precision and recall (those are methods of scoring true negatives, false positives, etc). We evaluate our model with Root Mean Squared Error. Our baseline_mse is just the root mean squared error of the [mean of our y_train] * len(y_test). Our cold_start model looks to be about 15-20% better than our baseline! Yay improvement! 
