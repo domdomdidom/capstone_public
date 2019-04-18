@@ -2,7 +2,7 @@
 ![](images/RockTape-Logo-R-B-RGB.png) 
 
 # Table of Contents
-1. [Packages Used](#Packages Used:)
+1. [Packages Used](#Packages-Used:)
 2. [Example2](#example2)
 3. [Third Example](#third-example)
 
